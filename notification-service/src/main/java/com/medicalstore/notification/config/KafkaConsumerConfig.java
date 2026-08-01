@@ -1,5 +1,6 @@
 package com.medicalstore.notification.config;
 
+import com.medicalstore.notification.dto.OrderEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
@@ -17,8 +18,8 @@ import java.util.Map;
 public class KafkaConsumerConfig {
 
     @Bean
-    public ConsumerFactory<String, ProductEvent> consumerFactory() {
-        JsonDeserializer<ProductEvent> deserializer = new JsonDeserializer<>(ProductEvent.class);
+    public ConsumerFactory<String, OrderEvent> consumerFactory() {
+        JsonDeserializer<OrderEvent> deserializer = new JsonDeserializer<>(OrderEvent.class);
         deserializer.addTrustedPackages("*");
 
         Map<String, Object> props = new HashMap<>();
@@ -30,8 +31,8 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, ProductEvent> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, ProductEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, OrderEvent> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, OrderEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
