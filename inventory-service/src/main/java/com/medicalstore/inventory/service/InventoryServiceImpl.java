@@ -4,6 +4,7 @@ package com.medicalstore.inventory.service;
 import com.medicalstore.inventory.dto.InventoryRequest;
 import com.medicalstore.inventory.dto.InventoryResponse;
 import com.medicalstore.inventory.entity.Inventory;
+import com.medicalstore.inventory.exception.InventoryNotFoundException;
 import com.medicalstore.inventory.repository.InventoryRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -164,5 +165,40 @@ public class InventoryServiceImpl
                 .build();
 
     }
+    @Override
+    public InventoryResponse updateInventory(InventoryRequest request) {
+        // Fetch the existing inventory entry for the product
+        Inventory inventory = repository.findByProductId(request.getProductId())
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product ID: " + request.getProductId()));
 
+        // Update inventory fields
+        inventory.setMedicineName(request.getMedicineName());
+        inventory.setBatchNumber(request.getBatchNumber());
+
+        // Save the updated inventory
+        Inventory updatedInventory = repository.save(inventory);
+
+        // Map the updated inventory to InventoryResponse and return
+        return mapToResponse(updatedInventory);
+    }
+
+    @Override
+    public void deleteInventory(Long productId) {
+        // Fetch the inventory entry for the product
+        Inventory inventory = repository.findByProductId(productId)
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product ID: " + productId));
+
+        // Delete the inventory entry
+        repository.delete(inventory);
+    }
+    private InventoryResponse mapToResponse(Inventory inventory) {
+        return InventoryResponse.builder()
+                .id(inventory.getId())
+                .productId(inventory.getProductId())
+                .medicineName(inventory.getMedicineName())
+                .batchNumber(inventory.getBatchNumber())
+                .quantity(inventory.getQuantity())
+                .minimumStock(inventory.getMinimumStock())
+                .build();
+    }
 }

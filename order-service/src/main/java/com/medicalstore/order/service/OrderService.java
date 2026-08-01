@@ -3,6 +3,7 @@ package com.medicalstore.order.service;
 import com.medicalstore.order.dto.InventoryResponse;
 import com.medicalstore.order.dto.OrderResponse;
 import com.medicalstore.order.dto.OrderRequest;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -38,7 +39,8 @@ public interface OrderService {
     /**
      * Generate invoice
      */
-    OrderResponse generateInvoice(Long orderId);
+    //OrderResponse generateInvoice(Long orderId);
+    ResponseEntity<byte[]> generateInvoice(Long orderId);
 
     /**
      * Verify stock with Inventory Service

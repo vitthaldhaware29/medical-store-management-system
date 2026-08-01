@@ -82,11 +82,10 @@ public class OrderController {
      * Generate Invoice
      */
     @GetMapping("/{orderId}/invoice")
-    public ResponseEntity<OrderResponse> generateInvoice(
+    public ResponseEntity<byte[]> generateInvoice(
             @PathVariable("orderId") Long orderId) {
 
-        return ResponseEntity.ok(
-                orderService.generateInvoice(orderId));
+        return orderService.generateInvoice(orderId);
     }
 
     /**

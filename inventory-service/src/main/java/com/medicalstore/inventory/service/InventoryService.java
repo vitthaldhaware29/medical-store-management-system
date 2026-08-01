@@ -38,5 +38,7 @@ public interface InventoryService {
 
     // Low Stock Alert
     List<InventoryResponse> getLowStockProducts();
+    InventoryResponse updateInventory(InventoryRequest request);
+    void deleteInventory(Long productId);
 
 }

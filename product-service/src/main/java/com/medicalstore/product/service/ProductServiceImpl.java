@@ -1,9 +1,11 @@
 package com.medicalstore.product.service;
 
+import com.medicalstore.product.dto.ProductEvent;
 import com.medicalstore.product.dto.ProductRequest;
 import com.medicalstore.product.dto.ProductResponse;
 import com.medicalstore.product.entity.Product;
 import com.medicalstore.product.exception.ProductNotFoundException;
+import com.medicalstore.product.producer.ProductKafkaProducer;
 import com.medicalstore.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,10 +18,10 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductKafkaProducer productKafkaProducer;
 
     @Override
     public ProductResponse createProduct(ProductRequest request) {
-
         if (productRepository.existsByBatchNumber(request.getBatchNumber())) {
             throw new RuntimeException("Batch Number already exists.");
         }
@@ -35,6 +37,14 @@ public class ProductServiceImpl implements ProductService {
 
         Product savedProduct = productRepository.save(product);
 
+        // Publish ProductEvent to Kafka
+        ProductEvent productEvent = ProductEvent.builder()
+                .productId(savedProduct.getId())
+                .medicineName(savedProduct.getMedicineName())
+                .batchNumber(savedProduct.getBatchNumber())
+                .build();
+        productKafkaProducer.sendMedicineCreatedEvent(productEvent);
+
         return mapToResponse(savedProduct);
     }
 
@@ -45,6 +55,9 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() ->
                         new ProductNotFoundException("Medicine not found with id : " + id));
 
+        boolean isInventoryFieldModified = !product.getBatchNumber().equals(request.getBatchNumber()) ||
+                !product.getExpiryDate().equals(request.getExpiryDate());
+
         product.setMedicineName(request.getMedicineName());
         product.setManufacturer(request.getManufacturer());
         product.setBatchNumber(request.getBatchNumber());
@@ -53,6 +66,16 @@ public class ProductServiceImpl implements ProductService {
         product.setCategory(request.getCategory());
 
         Product updatedProduct = productRepository.save(product);
+
+        // Publish ProductEvent only if inventory-related fields are modified
+        if (isInventoryFieldModified) {
+            ProductEvent productEvent = ProductEvent.builder()
+                    .productId(updatedProduct.getId())
+                    .medicineName(updatedProduct.getMedicineName())
+                    .batchNumber(updatedProduct.getBatchNumber())
+                    .build();
+            productKafkaProducer.sendMedicineUpdatedEvent(productEvent);
+        }
 
         return mapToResponse(updatedProduct);
     }
@@ -65,6 +88,14 @@ public class ProductServiceImpl implements ProductService {
                         new ProductNotFoundException("Medicine not found with id : " + id));
 
         productRepository.delete(product);
+
+        // Publish ProductEvent for product deletion
+        ProductEvent productEvent = ProductEvent.builder()
+                .productId(product.getId())
+                .medicineName(product.getMedicineName())
+                .batchNumber(product.getBatchNumber())
+                .build();
+        productKafkaProducer.sendMedicineDeletedEvent(productEvent);
     }
 
     @Override

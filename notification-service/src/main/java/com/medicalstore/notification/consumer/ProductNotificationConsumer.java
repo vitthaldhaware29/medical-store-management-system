@@ -1,6 +1,6 @@
 package com.medicalstore.notification.consumer;
 
-import com.medicalstore.notification.dto.ProductEvent;
+import com.medicalstore.notification.dto.OrderEvent;
 import com.medicalstore.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,15 +14,9 @@ public class ProductNotificationConsumer {
 
     private final NotificationService notificationService;
 
-    @KafkaListener(
-            topics = "medicine-created",
-            groupId = "notification-group"
-    )
-    public void consume(ProductEvent event) {
-
-        log.info("Kafka Event Received : {}", event);
-
+    @KafkaListener(topics = "order-event", groupId = "notification-group")
+    public void consumeOrderEvent(OrderEvent event) {
+        log.info("Kafka Order Event Received: {}", event);
         notificationService.sendNotification(event);
-
     }
 }
